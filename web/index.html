@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+    <head>
+		<meta charset="UTF-8" /> 
+	
+        <script src="codebase/dhtmlx.js" type="text/javascript"></script>
+        <link rel="STYLESHEET" type="text/css" href="codebase/dhtmlx.css">
+	
+        <style>
+    /*these styles allow Layout to work in Full Screen mode correctly in any browser*/
+            html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0px;
+                overflow: hidden;
+                background-color:white;
+            }
+	    div#winVP {
+		position: relative;
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+	    }
+		           
+	   span.minussign {
+		font-size: 12px;
+		font-family: Tahoma;
+		padding: 0px 10px;
+	   } 
+	   
+			
+        </style>
+ 
+        <script type="text/javascript">
+		
+			window.onload = function(){ 
+            //Here you'll put code of your application
+
+
+				window.dhx4.skin = 'dhx_skyblue';
+				var main_layout = new dhtmlXLayoutObject(document.body, '1C');
+				var Layout_Temp = main_layout.cells('a');
+				Layout_Temp.setText('');
+				
+				//### Main Menu ###
+				var Main_menu = main_layout.attachMenu();
+				Main_menu.setIconsPath('codebase/imgs/custom/');	
+				Main_menu.loadStruct('data/s-xml/menu.xml');
+				
+				Main_menu.attachEvent("onClick", function(id){
+				  if(id=="newNeigh"){
+					Layout_Temp.setText('Create new neighbourhood');
+					var layout_trees = Layout_Temp.attachLayout('3J');
+					var cell_Tree1 = layout_trees.cells('a');
+					cell_Tree1.setText('Templates');
+					cell_Tree1.setHeight("300");
+					var myTree = cell_Tree1.attachTree();
+					myTree.enableDragAndDrop(true);
+					myTree.enableMercyDrag(true);
+					myTree.enableCheckBoxes(false);
+					myTree.setImagePath('codebase/imgs/dhxtree_'+dhx4.skin.replace(/^dhx_/,'')+'/');
+					myTree.setDragHandler(maf);
+					myTree.enableSmartXMLParsing(true);
+					myTree.load('data/d-xml/tree.xml','xml');
+					var cell_Grid = layout_trees.cells('b');
+					cell_Grid.setText('Devices instances');
+					var cell_Param = layout_trees.cells('c');
+					cell_Param.setText('Devices parameters');
+					myGrid = cell_Grid.attachGrid();
+					
+					//myGrid = new dhtmlXGridObject('gridbox'); 
+					//the path to images required by grid         
+					myGrid.setImagePath("./codebase/imgs/");                         
+					myGrid.setHeader("Instance ID,Template ID,Template Name,Type,Class");
+					//the headers of columns          
+					myGrid.setInitWidths("80,58,250,150,100");          
+					//the widths of columns          
+					myGrid.setColAlign("right,right,left,left,left");       
+					//the alignment of columns           
+					myGrid.setColTypes("ro,ro,ro,ro,ro");                
+					//the types of columns          
+					myGrid.setColSorting("int,int,str,str,str");          
+					//the sorting types        
+					myGrid.enableDragAndDrop(true);
+					myGrid.init();
+					
+					//cell_Grid.showView("win");
+					//cell_Grid.attachObject("winVP");
+					//dhxWins = new dhtmlXWindows();
+					//dhxWins.attachViewportTo("winVP");
+					//w1 = dhxWins.createWindow("w1", 10, 10, 400, 350);
+					//w1.attachEvent("onClose", function(){
+    					//	cell_Grid.showView("def");
+					//});
+					//w1.denyResize();
+					var temp_arr=[];
+					myGrid.treeToGridElement = function(treeObj,treeNodeId,gridRowId){
+						temp_arr.push(treeNodeId);
+						var i, j,
+						count = 0;
+					    	for (i = 0, j = temp_arr.length; i < j; i++) {
+							(temp_arr[i] === treeNodeId) && count++;
+					    	}
+            					var r=dhx4.ajax.postSync("data/php/addNeighDevice.php", "id="+treeNodeId+"&count="+count);
+						//myGrid.updateFromXML("data/d-xml/addNeighDevice.xml?ids="+ids);
+						cell_Grid.appendObject("buttGrid");
+						//var r=dhx4.ajax.getSync("data/php/row.php?ids="+ids);
+						//t = dhx4.s2j(r.xmlDoc.responseText);
+						//if (t != null) {
+						//	myGrid.forEachRow(function(id){						
+						//	//console.log(myGrid.cells(id, 0).getValue());
+						//		if((myGrid.cells(id, 0).length)<1)
+						//			myGrid.deleteRow(id);
+						//	});
+							//myGrid.addRow(t.instance+"*"+t.temp_id, t.instance + ","+ t.temp_id+","+ t.name+","+ t.type+","+ t.class);
+							
+						//} else {
+						//	// response is not in json format
+						//}
+						////return [t.instance, t.temp_id, t.name, t.type, t.class];
+						var row = r.xmlDoc.responseText;
+						var row_arr = row.split("*");
+						return [row_arr[0], row_arr[1], row_arr[2], row_arr[3], row_arr[4]];
+					};
+					myGrid.attachEvent("onGridReconstructed",function(){this.setSizes()});
+					myGrid.rowToDragElement = function (id){
+						if(this.cells(id,2).getValue()!="")
+							return this.cells(id,2).getValue()+"/"+this.cells(id,1).getValue();
+						return this.cells(id,1).getValue();
+					}
+					
+					function maf(){
+						return false;
+					}
+					
+				  }
+				  else if(id=="newBeha"){
+					Layout_Temp.setText('Create new behaviour');
+					var layout_beh = Layout_Temp.attachLayout('3J');
+					var cell_Sel = layout_beh.cells('a');
+					cell_Sel.setText('Select neighbourhood');
+					cell_Sel.setHeight("100");
+					myCombo = cell_Sel.attachObject("combo_zone3");
+					var t=dhx4.ajax.postSync("data/php/combo.php");
+					r = t.xmlDoc.responseText;
+					var tuples = r.split("@");
+					myCombo = new dhtmlXCombo("combo_zone3","alfa3",200);
+					
+					for (i = 0; i < tuples.length; i++) {
+   						myCombo.addOption([
+						 {value:tuples[i].split("*")[0], text:tuples[i].split("*")[1]},
+						]);
+					}
+					myCombo.enableFilteringMode(true);
+					myCombo.attachEvent("onChange", function(value, text){
+						var cell_Grid2 = layout_beh.cells('c');
+						cell_Grid2.setText('Neighbourhood instances');
+						myGrid2 = cell_Grid2.attachGrid();
+						myGrid2.setImagePath("./codebase/imgs/");                         
+						myGrid2.setHeader("Instance ID,Template ID,Template Name,Type,Class");
+						myGrid2.setInitWidths("80,58,250,150,100");          
+						myGrid2.setColAlign("right,right,left,left,left");       
+						myGrid2.setColTypes("ro,ro,ro,ro,ro");                
+						myGrid2.setColSorting("int,int,str,str,str");          
+						myGrid2.enableDragAndDrop(true);
+						myGrid2.enableMercyDrag(true);
+						myGrid2.init();
+						//snippet just copies the data, without applying any modifications to it
+						//myGrid2.gridToGrid = function(rowId,sgrid,tgrid){
+						//
+						//return [];
+						//};
+						//myGrid2.attachEvent("onGridReconstructed",function(){this.setSizes()});
+						//myGrid2.rowToDragElement = function (id){
+						//	if(this.cells(id,2).getValue()!="")
+						//		return this.cells(id,2).getValue()+"/"+this.cells(id,1).getValue();
+						//	return this.cells(id,1).getValue();
+						//}
+						myGrid2.load("data/d-xml/data.xml?id="+value, "xml");
+
+						//right GRID
+						var cell_Grid3 = layout_beh.cells('b');
+						cell_Grid3.setText('Configurations');
+						myGrid3 = cell_Grid3.attachGrid();
+					
+						myGrid3.setImagePath("./codebase/imgs/");                         
+						myGrid3.setHeader("Instance ID,Template ID,Task,Model,Model ID,Program, Date, Multiplicity, EST gen");
+						myGrid3.setInitWidths("80,100,80,80,100,100,100,100,150");          
+						myGrid3.setColAlign("right,right,left,left,left,left,left,left,left");       
+						myGrid3.setColTypes("ro,ro,ro,ro,ro,ro,ro,ro,ro");//coro for combobox                
+						myGrid3.setColSorting("int,int,int,str,int,int,str,int,str");
+						//set values for select box in 5th column
+						//var comboboxEST = myGrid3.getCombo(7);
+						//var comboboxLST = myGrid3.getCombo(8);
+					//	comboboxEST.put("00","00");
+					
+						myGrid3.setColumnHidden(0,true);
+						myGrid3.enableDragAndDrop(true);
+						myGrid3.init();
+						myGrid3.gridToGrid = function(rowId,sgrid,tgrid){
+							var instance=sgrid.cells(rowId,0).getValue();
+							var template=sgrid.cells(rowId,1).getValue();
+							taskNum = 1;
+							formData2 = [
+						{type: "label", label: "Configure instance tasks", position: "label-left", labelWidth: 150, inputWidth: 120},
+						{type: "fieldset", label: "Task " + taskNum, offsetTop: 12, width: 610, list: [
+							{type: "block", inputWidth: "auto", offsetTop: 12, list: [
+							{type: "combo", label: "Program: ", name: "program_1", connector: "data/php/programConnector.php?template="+template, inputWidth: "100"},
+    							{type: "combo", label: "Run date: ", name: "date_1", inputWidth: "150",offsetTop: 15,},
+							{type:"newcolumn"},
+							{type:"input",name:"mult_1",label:"Multiplicity",inputWidth: "50"},
+							{type:"button",name:"chart_1",value:"View"},
+						]},
+						
+							{type: "label", label: "EST and LST generation parameters", position: "label-left", labelWidth: 300, inputWidth: 300},
+							{type: "block", inputWidth: "auto", offsetTop: 12, list: [
+							{type: "radio", name: "constraints_1", label: "Fixed", value: "fixed", 
+       								checked:"true", position:"label-right"},
+    							{type: "radio", name: "constraints_1", label: "Random + fixed delay", value: "rand", 
+       								position:"label-right"},
+							{type: "radio", name: "constraints_1", label: "Random EST + delay", value: "randDel", 
+       								position:"label-right"},
+							{type:"newcolumn"},
+							{type:"container", 
+        name: "sliderBox_1", inputWidth:170, offsetLeft: 10, label:"<span id='sliderLink_" + instance + template + taskNum + "' style='font-size: 12px; font-family: Tahoma;'>15:00</span><span class='minussign'>-</span><span id='sliderLink2_" + instance + template + taskNum + "' style='font-size: 12px; font-family: Tahoma;'>21:00</span>"},
+							{type:"container", disabled: "true",
+        name: "sliderBoxRand_1", inputWidth:170, offsetLeft: 10, label:"<span id='sliderLinkRand_" + instance + template + taskNum + "' style='font-size: 12px; font-family: Tahoma;'>15:00</span><span class='minussign'>-</span><span id='sliderLinkRand2_" + instance + template + taskNum + "' style='font-size: 12px; font-family: Tahoma;'>21:00</span>"},
+							{type:"container", disabled: "true",
+	name: "sliderBoxDel_1", inputWidth:170, offsetLeft: 10, label:"<span id='sliderLinkDel_" + instance + template + taskNum + "'' style='font-size: 12px; font-family: Tahoma;'>15:00</span><span class='minussign'>-</span><span id='sliderLinkDel2_" + instance + template + taskNum + "' style='font-size: 12px; font-family: Tahoma;'>21:00</span>"},
+							{type: "label", label:"<span id='sliderNewDel_" + instance + template + taskNum + "'' style='font-size: 12px; font-family: Tahoma;'>3 hrs</span><span class='minussign'>-</span><span id='sliderNewDel2_" + instance + template + taskNum + "' style='font-size: 12px; font-family: Tahoma;'>5 hrs</span>", position: "label-left", labelWidth: 250, offsetLeft: 10},
+							{type:"container", disabled: "true", name: "sliderDel_1", inputWidth:250, offsetLeft: 10, },
+							{type:"newcolumn"},
+							{type: "label", label: "Delay (minutes)", position: "label-left", labelWidth: 100, offsetLeft: 10},
+							{type:"input", disabled: "true", name:"indel_1",inputWidth: "50", offsetLeft: 10},
+							
+							
+						]},
+						]},
+						{type: "block", inputWidth: "auto", offsetTop: 12, list: [
+						{type: "button", name: "add", value: "Add Task", offsetLeft: 70, offsetTop: 14},
+						{type:"newcolumn"},
+						{type: "button", name: "create", value: "Create configuration", offsetLeft: 70, offsetTop: 14}
+						]},						
+						];
+						
+						cell_Grid3.showView("win");
+						cell_Grid3.attachObject("winVP");
+						dhxWins2 = new dhtmlXWindows();
+						dhxWins2.attachViewportTo("winVP");
+
+						w1 = dhxWins2.createWindow("w1", 10, 10, 630, 550);
+						w1.setText("Tasks");
+						w1.attachEvent("onClose", function(){
+    							cell_Grid3.showView("def");
+						});
+						//w1.denyResize();
+						myForm3 = w1.attachForm(formData2, true);
+						var inp = myForm3.getContainer("sliderBox_1");
+						var mySlider = [];
+						mySlider.push(new dhtmlXSlider({
+							parent: inp,
+							//linkTo: ["sliderLink_" + instance + template + taskNum, "sliderLink2_" + instance + template + taskNum],
+							step: 0.25,
+							min: 0,
+							max: 24,
+							value: [15, 21],
+							range: true
+						}));
+						var inpRand = myForm3.getContainer("sliderBoxRand_1");
+						var mySliderRand = [];
+						mySliderRand.push(new dhtmlXSlider({
+							parent: inpRand,
+							//linkTo: ["sliderLinkRand_" + instance + template + taskNum, "sliderLinkRand2_" + instance + template + taskNum],
+							step: 0.25,
+							min: 0,
+							max: 24,
+							value: [15, 21],
+							range: true,
+							disabled: true,
+						}));
+						var inpDel = myForm3.getContainer("sliderBoxDel_1");
+						var mySliderDel = [];
+						mySliderDel.push(new dhtmlXSlider({
+							parent: inpDel,
+							//linkTo: ["sliderLinkDel_" + instance + template + taskNum, "sliderLinkDel2_" + instance + template + taskNum],
+							step: 0.25,
+							min: 0,
+							max: 24,
+							value: [15, 21],
+							range: true,
+							disabled: true,
+						}));
+						var inpNew = myForm3.getContainer("sliderDel_1");
+						var sliderDel = [];
+						sliderDel.push(new dhtmlXSlider({
+							parent: inpNew,
+							//linkTo: ["sliderNewDel_" + instance + template + taskNum, "sliderNewDel2_" + instance + template + taskNum],
+							step: 0.25,
+							min: 0,
+							max: 24,
+							value: [3, 5],
+							range: true,
+							disabled: true,
+						}));
+						var tempSLI=[];
+						tempSLI.push(mySlider[taskNum-1]);
+						tempSLI[taskNum-1].attachEvent("onChange", function(value){
+							//var span=document.getElementById("sliderLink_" + instance + template + taskNum);
+							//var span2=document.getElementById("sliderLink2_" + instance + template + taskNum);
+							var minutes = ((value[0]%1)*60);
+							if (minutes == 0) minutes = "00";
+							var minutes2 = ((value[1]%1)*60);
+							if (minutes2 == 0) minutes2 = "00";
+							document.getElementById("sliderLink_" + instance + template + taskNum).innerHTML=Math.floor(value[0])+":"+minutes;
+							document.getElementById("sliderLink2_" + instance + template + taskNum).innerHTML=Math.floor(value[1])+":"+minutes2;
+						});
+						var tempSLIRand=[];
+						tempSLIRand.push(mySliderRand[taskNum-1]);
+						tempSLIRand[taskNum-1].attachEvent("onChange", function(value){
+							//var span=document.getElementById("sliderLinkRand_" + instance + template + taskNum);
+							//var span2=document.getElementById("sliderLinkRand2_" + instance + template + taskNum);
+							var minutes = ((value[0]%1)*60);
+							if (minutes == 0) minutes = "00";
+							var minutes2 = ((value[1]%1)*60);
+							if (minutes2 == 0) minutes2 = "00";
+							document.getElementById("sliderLinkRand_" + instance + template + taskNum).innerHTML=Math.floor(value[0])+":"+minutes;
+							document.getElementById("sliderLinkRand2_" + instance + template + taskNum).innerHTML=Math.floor(value[1])+":"+minutes2;
+						});
+						var tempSLIDel=[];
+						tempSLIDel.push(mySliderDel[taskNum-1]);
+						tempSLIDel[taskNum-1].attachEvent("onChange", function(value){
+							//var span=document.getElementById("sliderLinkDel_" + instance + template + taskNum);
+							//var span2=document.getElementById("sliderLinkDel2_" + instance + template + taskNum);
+							var minutes = ((value[0]%1)*60);
+							if (minutes == 0) minutes = "00";
+							var minutes2 = ((value[1]%1)*60);
+							if (minutes2 == 0) minutes2 = "00";
+							document.getElementById("sliderLinkDel_" + instance + template + taskNum).innerHTML=Math.floor(value[0])+":"+minutes;
+							document.getElementById("sliderLinkDel2_" + instance + template + taskNum).innerHTML=Math.floor(value[1])+":"+minutes2;
+						});
+						var tempSLINew=[];
+						tempSLINew.push(sliderDel[taskNum-1]);
+						tempSLINew[taskNum-1].attachEvent("onChange", function(value){
+							//var span=document.getElementById("sliderNewDel_" + instance + template + taskNum);
+							//var span2=document.getElementById("sliderNewDel2_" + instance + template + taskNum);
+							var minutes = ((value[0]%1)*60);
+							if (minutes == 0) minutes = "00";
+							var minutes2 = ((value[1]%1)*60);
+							if (minutes2 == 0) minutes2 = "00";
+							var hours = Math.floor(value[0]);
+							var hours2 = Math.floor(value[1]);
+							if((hours<2)&&(minutes<2)){strHour="h"; strMin="m";}
+							else if((hours<2)&&(!minutes<2)){strHour="h"; strMin="mins";}
+							else if((!hours<2)&&(minutes<2)){strHour="hrs"; strMin="m";}
+							else {strHour="hrs"; strMin="mins";}
+							if((hours2<2)&&(minutes2<2)){strHour2="h"; strMin2="m";}
+							else if((hours2<2)&&(!minutes2<2)){strHour2="h"; strMin2="mins";}
+							else if((!hours2<2)&&(minutes2<2)){strHour2="hrs"; strMin2="m";}
+							else {strHour2="hrs"; strMin2="mins";}
+							document.getElementById("sliderNewDel_" + instance + template + taskNum).innerHTML=hours+" "+strHour+", "+minutes+" "+strMin;
+							document.getElementById("sliderNewDel2_" + instance + template + taskNum).innerHTML=hours2+" "+strHour2+", "+minutes2+" "+strMin2;
+						});
+						var comboRun = myForm3.getCombo("date_1");
+						comboRun.attachEvent("onChange", function(value, text){
+												
+						});
+						var comboConf = myForm3.getCombo("program_1");
+						comboConf.attachEvent("onChange", function(value, text){
+							comboRun.load("data/d-xml/runDates.xml?val="+value+"&template="+template);					
+						});
+						myForm3.attachEvent("onButtonClick", function(name){
+							if(name=="add"){
+								//for(var k = 0; k<taskNum; k++){
+								//	console.log(mySlider[k].getValue());				
+								//}
+								taskNum++;
+								
+								var itemData = 
+								{type: "fieldset", label: "Task " + taskNum, offsetTop: 12, width: 610, list:[
+								{type: "block", inputWidth: "auto", offsetTop: 12, list: [
+									{type: "combo", label: "Program: ", name: "program_" + taskNum, connector: "data/php/programConnector.php?template="+template, inputWidth: "100"},
+		    							{type: "combo", label: "Run date: ", name: "date_" + taskNum, inputWidth: "150", offsetTop: 15},
+									{type:"newcolumn"},
+							{type:"input",name:"mult_" + taskNum,label:"Multiplicity",inputWidth: "50"},
+							{type:"button",name:"chart_" + taskNum,value:"View"},
+						]},
+						
+							{type: "label", label: "EST and LST generation parameters", position: "label-left", labelWidth: 300, inputWidth: 300},
+							{type: "block", inputWidth: "auto", offsetTop: 12, list: [
+									{type: "radio", name: "constraints_" + taskNum, label: "Fixed", value: "fixed", checked:"true", position:"label-right"},
+    									{type: "radio", name: "constraints_" + taskNum, label: "Random + fixed delay", value: "rand", position:"label-right"},
+									{type: "radio", name: "constraints_" + taskNum, label: "Random EST+delay", value: "randDel", position:"label-right"},
+									{type:"newcolumn"},
+								{type:"container", 
+        name: "sliderBox_" + taskNum, inputWidth:170, offsetLeft: 10, label:"<span id='sliderLink_" + instance + template + taskNum + "' style='font-size: 12px; font-family: Tahoma;'>15:00</span><span class='minussign'>-</span><span id='sliderLink2_" + instance + template + taskNum + "' style='font-size: 12px; font-family: Tahoma;'>21:00</span>"},
+								{type:"container", disabled: "true", 
+        name: "sliderBoxRand_" + taskNum, inputWidth:170, offsetLeft: 10, label:"<span id='sliderLinkRand_" + instance + template + taskNum + "' style='font-size: 12px; font-family: Tahoma;'>15:00</span><span class='minussign'>-</span><span id='sliderLinkRand2_" + instance + template + taskNum + "' style='font-size: 12px; font-family: Tahoma;'>21:00</span>"},
+								{type:"container", disabled: "true", 
+	name: "sliderBoxDel_" + taskNum, inputWidth:170, offsetLeft: 10, label:"<span id='sliderLinkDel_" + instance + template + taskNum + "' style='font-size: 12px; font-family: Tahoma;'>15:00</span><span class='minussign'>-</span><span id='sliderLinkDel2_" + instance + template + taskNum + "' style='font-size: 12px; font-family: Tahoma;'>21:00</span>"},
+								{type: "label", label:"<span id='sliderNewDel_" + instance + template + taskNum + "'' style='font-size: 12px; font-family: Tahoma;'>3 hrs</span><span class='minussign'>-</span><span id='sliderNewDel2_" + instance + template + taskNum + "' style='font-size: 12px; font-family: Tahoma;'>5 hrs</span>", position: "label-left", labelWidth: 250, offsetLeft: 10},
+							{type:"container", disabled: "true", name: "sliderDel_" + taskNum, inputWidth:250, offsetLeft: 10, },
+								{type:"newcolumn"},
+							{type: "label", label: "Delay (minutes)", position: "label-left", labelWidth: 100, offsetLeft: 10},
+							{type:"input", disabled: "true", name:"indel_" + taskNum,inputWidth: "50", offsetLeft: 10},
+								]},
+								]};
+								
+								//myForm3.removeItem("program");
+								myForm3.addItem(null, itemData, taskNum);
+								
+								//myForm3.forEachItem(function(name){
+								//    console.log(name);
+								//});
+							var inp = myForm3.getContainer("sliderBox_" + taskNum);
+								mySlider.push(new dhtmlXSlider({
+									parent: inp,
+									//linkTo: ["sliderLink_" + instance + template + taskNum, "sliderLink2_" + instance + template + taskNum],
+									step: 0.25,
+									min: 0,
+									max: 24,
+									value: [15, 21],
+									range: true
+								}));
+							var inpRand = myForm3.getContainer("sliderBoxRand_" + taskNum);
+								mySliderRand.push(new dhtmlXSlider({
+									parent: inpRand,
+									//linkTo: ["sliderLinkRand_" + instance + template + taskNum, "sliderLinkRand2_" + instance + template + taskNum],
+									step: 0.25,
+									min: 0,
+									max: 24,
+									value: [15, 21],
+									range: true,
+									disabled: true,
+								}));
+							var inpDel = myForm3.getContainer("sliderBoxDel_" + taskNum);
+								mySliderDel.push(new dhtmlXSlider({
+									parent: inpDel,
+									//linkTo: ["sliderLinkDel_" + instance + template + taskNum, "sliderLinkDel2_" + instance + template + taskNum],
+									step: 0.25,
+									min: 0,
+									max: 24,
+									value: [15, 21],
+									range: true,
+									disabled: true,
+								}));
+							var inpNew = myForm3.getContainer("sliderDel_" + taskNum);
+							sliderDel.push(new dhtmlXSlider({
+								parent: inpNew,
+								//linkTo: ["sliderNewDel_" + instance + template + taskNum, "sliderNewDel2_" + instance + template + taskNum],
+								step: 0.25,
+								min: 0,
+								max: 24,
+								value: [3, 5],
+								range: true,
+								disabled: true,
+							}));
+							
+							tempSLI.push(mySlider[taskNum-1]);
+							tempSLI[taskNum-1].attachEvent("onChange", function(value){
+								//var span=document.getElementById("sliderLink_" + instance + template + taskNum);
+								//var span2=document.getElementById("sliderLink2_" + instance + template + taskNum);
+								var minutes = ((value[0]%1)*60);
+								if (minutes == 0) minutes = "00";
+								var minutes2 = ((value[1]%1)*60);
+								if (minutes2 == 0) minutes2 = "00";
+								document.getElementById("sliderLink_" + instance + template + taskNum).innerHTML=Math.floor(value[0])+":"+minutes;
+								document.getElementById("sliderLink2_" + instance + template + taskNum).innerHTML=Math.floor(value[1])+":"+minutes2;
+							});
+						
+							tempSLIRand.push(mySliderRand[taskNum-1]);
+							tempSLIRand[taskNum-1].attachEvent("onChange", function(value){
+								//var span=document.getElementById("sliderLinkRand_" + instance + template + taskNum);
+								//var span2=document.getElementById("sliderLinkRand2_" + instance + template + taskNum);
+								var minutes = ((value[0]%1)*60);
+								if (minutes == 0) minutes = "00";
+								var minutes2 = ((value[1]%1)*60);
+								if (minutes2 == 0) minutes2 = "00";
+								document.getElementById("sliderLinkRand_" + instance + template + taskNum).innerHTML=Math.floor(value[0])+":"+minutes;
+								document.getElementById("sliderLinkRand2_" + instance + template + taskNum).innerHTML=Math.floor(value[1])+":"+minutes2;
+							});
+							tempSLIDel.push(mySliderDel[taskNum-1]);
+							tempSLIDel[taskNum-1].attachEvent("onChange", function(value){
+								//var span=document.getElementById("sliderLinkDel_" + instance + template + taskNum);
+								//var span2=document.getElementById("sliderLinkDel2_" + instance + template + taskNum);
+								var minutes = ((value[0]%1)*60);
+								if (minutes == 0) minutes = "00";
+								var minutes2 = ((value[1]%1)*60);
+								if (minutes2 == 0) minutes2 = "00";
+								document.getElementById("sliderLinkDel_" + instance + template + taskNum).innerHTML=Math.floor(value[0])+":"+minutes;
+								document.getElementById("sliderLinkDel2_" + instance + template + taskNum).innerHTML=Math.floor(value[1])+":"+minutes2;
+							});
+							tempSLINew.push(sliderDel[taskNum-1]);
+							tempSLINew[taskNum-1].attachEvent("onChange", function(value){
+								//var span=document.getElementById("sliderNewDel_" + instance + template + taskNum);
+								//var span2=document.getElementById("sliderNewDel2_" + instance + template + taskNum);
+								var minutes = ((value[0]%1)*60);
+								if (minutes == 0) minutes = "00";
+								var minutes2 = ((value[1]%1)*60);
+								if (minutes2 == 0) minutes2 = "00";
+								var hours = Math.floor(value[0]);
+								var hours2 = Math.floor(value[1]);
+								if((hours<2)&&(minutes<2)){strHour="h"; strMin="m";}
+								else if((hours<2)&&(!minutes<2)){strHour="h"; strMin="mins";}
+								else if((!hours<2)&&(minutes<2)){strHour="hrs"; strMin="m";}
+								else {strHour="hrs"; strMin="mins";}
+								if((hours2<2)&&(minutes2<2)){strHour2="h"; strMin2="m";}
+								else if((hours2<2)&&(!minutes2<2)){strHour2="h"; strMin2="mins";}
+								else if((!hours2<2)&&(minutes2<2)){strHour2="hrs"; strMin2="m";}
+								else {strHour2="hrs"; strMin2="mins";}
+								document.getElementById("sliderNewDel_" + instance + template + taskNum).innerHTML=hours+" "+strHour+", "+minutes+" "+strMin;
+								document.getElementById("sliderNewDel2_" + instance + template + taskNum).innerHTML=hours2+" "+strHour2+", "+minutes2+" "+strMin2;
+							});
+								var comboRun = myForm3.getCombo("date_" + taskNum);
+								comboRun.attachEvent("onChange", function(value, text){
+													
+								});
+								var comboConf = myForm3.getCombo("program_" + taskNum);
+								comboConf.attachEvent("onChange", function(value, text){
+									comboRun.load("data/d-xml/runDates.xml?val="+value+"&template="+template);					
+								});
+							}
+							else if(name=="create"){
+								dhxWins2 = new dhtmlXWindows();
+								dhxWins2.attachViewportTo("winVP");
+								w2 = dhxWins2.createWindow("w2", 10, 10, 400, 550);
+								w2.setText("Tasks");
+								w2.attachEvent("onClose", function(){
+			    						cell_Grid3.showView("def");
+								});
+								//w2.denyResize();
+							
+								myGrid3.forEachRow(function(id){
+									
+									if((myGrid3.cells(id, 0).getValue().length)<1)
+											myGrid3.deleteRow(id);
+								});				
+			    						
+								cell_Grid3.showView("def");
+								for(var k=1; k<=taskNum; k++){
+									var dhxComboProg = myForm3.getCombo("program_" + k);
+									var dhxComboDate = myForm3.getCombo("date_" + k);
+									var multVal = myForm3.getItemValue("mult_" + k);
+									var radioVal = myForm3.getCheckedValue("constraints_" + k);
+									var program = dhxComboProg.getSelectedText();
+									var date = dhxComboDate.getSelectedText();
+									var EST="";
+									if(radioVal=="fixed"){ 
+										var est_arr = mySlider[k-1].getValue("sliderBox_" + k);
+										var minutes = ((est_arr[0]%1)*60);
+										if (minutes == 0) minutes = "00";
+										var minutes2 = ((est_arr[1]%1)*60);
+										if (minutes2 == 0) minutes2 = "00";
+										EST = Math.floor(est_arr[0])+":"+minutes+"-"+Math.floor(est_arr[1])+":"+minutes2;
+									}
+									else if(radioVal=="rand"){
+										var rand_arr = mySliderRand[k-1].getValue("sliderBoxRand_" + k);
+										var delVal = myForm3.getItemValue("indel_" + k);
+										var rand_minutes = ((rand_arr[0]%1)*60);
+										if (rand_minutes == 0) rand_minutes = "00";
+										var rand_minutes2 = ((rand_arr[1]%1)*60);
+										if (rand_minutes2 == 0) rand_minutes2 = "00";
+										EST = "rand"+Math.floor(rand_arr[0])+":"+rand_minutes+"-"+Math.floor(rand_arr[1])+":"+rand_minutes2+"del"+delVal;
+									}
+									else if(radioVal=="randDel"){
+										var ranDel_arr = mySliderDel[k-1].getValue("sliderBoxDel_" + k);
+										var newDel_arr = sliderDel[k-1].getValue("sliderDel_" + k);
+										var del_minutes = ((ranDel_arr[0]%1)*60);
+										if (del_minutes == 0) del_minutes = "00";
+										var del_minutes2 = ((ranDel_arr[1]%1)*60);
+										if (del_minutes2 == 0) del_minutes2 = "00";
+										var new_minutes = ((newDel_arr[0]%1)*60);
+										if (new_minutes == 0) new_minutes = "00";
+										var new_minutes2 = ((newDel_arr[1]%1)*60);
+										if (new_minutes2 == 0) new_minutes2 = "00";
+										EST = Math.floor(ranDel_arr[0])+":"+del_minutes+"-"+Math.floor(ranDel_arr[1])+":"+del_minutes2+"del"+Math.floor(newDel_arr[0])+":"+new_minutes+"-"+Math.floor(newDel_arr[1])+":"+new_minutes2;
+									}
+									
+									myGrid3.addRow(instance+template+k,instance+","+template+","+k+","+"run"+","+dhxComboDate.getSelectedValue()+","+program+","+date+","+multVal+","+EST);
+								}
+							cell_Grid3.appendObject("buttBehaviour");
+							}
+							//Chart visualization
+							else if(name.indexOf("chart_") !== -1){
+								var indexChart = name.substring(6, name.length);
+								var combo_chart = myForm3.getCombo("date_"+indexChart);
+								var id_run=combo_chart.getSelectedValue();
+								//cell_Grid3.showView("chart");
+								//cell_Grid3.attachObject("winChart");
+								//dhxWins4 = new dhtmlXWindows();
+								//dhxWins4.attachViewportTo("winChart");
+
+								w4 = dhxWins2.createWindow("w4", 10, 10, 630, 550);
+								w4.setText("Chart");
+								//w4.attachEvent("onClose", function(){
+			    					//	w4.unload();
+								//});
+								var chart_Profile_1 = w4.attachChart({
+									view:"line",
+									container:"chart1",
+									value:"#power#",
+									item:{
+										borderColor: "#000000",
+										color: "#ffffff",
+										borderWidth:1,
+										radius:3
+									},
+									line:{
+										color:"#3399ff",
+										width:3
+									},
+									tooltip:{
+										template:"#power#"
+									},	
+									xAxis:{
+										title:"Seconds",
+										template:"#seconds#"				
+									},
+									yAxis:{
+									//start:0,
+									//end:10000,
+									//step:500,
+									title:"Power [kW]"
+									},
+									origin:0,
+									legend:{
+										values:[{text:"Line 1"},{text:"Line 2"}],
+										align:"right",
+										valign:"middle",
+										layout:"power",
+										width: 100,
+										margin: 8,
+										marker:{
+											type: "item"
+										}
+									}
+
+									});
+				
+								//abilitazione linea2 per secondo parametro
+								chart_Profile_1.addSeries({
+								value:"#y2#",
+								item:{
+									borderColor: "#0a796a",
+									color: "#4aa397",
+									type:"s",
+									radius: 4
+								},
+								line:{
+									color:"#4aa397",
+									width:2
+								},
+								tooltip:{
+									template:"#y2#"
+								}
+								});
+								
+							//caricamento del grafico di tutto il profile device
+							chart_Profile_1.clearAll();
+							chart_Profile_1.load('data/d-xml/chartProfile.xml?id='+id_run+"&template="+template, 'xml');
+							//w4.attachEvent("onClose", function(){
+			    				//	chart_Profile_1.clearAll();
+								
+							//});
+///////////////////////////////////////////////////////////////////////////
+							}
+						
+						});
+						//this event is used to disable and enable form sliders
+						myForm3.attachEvent("onChange", function (name, value){
+						     if(name.indexOf("constraints_") !== -1){
+							var index = name.substring(12, name.length);
+							if (value=="fixed"){ 
+						     		myForm3.enableItem("sliderBox_"+index);
+								mySlider[index-1].enable();
+								for(var jk=0; jk<taskNum; jk++){
+									myForm3.disableItem("sliderBoxRand_" + index);
+						     			myForm3.disableItem("indel_" + index);
+									myForm3.disableItem("sliderBoxDel_" + index);
+						     			myForm3.disableItem("sliderDel_" + index);
+									mySliderRand[index-1].disable();
+									mySliderDel[index-1].disable();
+									sliderDel[index-1].disable();
+								}
+							}
+							else if (value=="rand"){
+								myForm3.enableItem("sliderBoxRand_"+index);
+								myForm3.enableItem("indel_"+index);
+								mySliderRand[index-1].enable();
+								for(var jk=0; jk<taskNum; jk++){
+									myForm3.disableItem("sliderBox_" + index);
+									myForm3.disableItem("sliderBoxDel_" + index);
+						     			myForm3.disableItem("sliderDel_" + index);
+									mySlider[index-1].disable();
+									mySliderDel[index-1].disable();
+									sliderDel[index-1].disable();
+								}
+							}
+							else if (value=="randDel"){
+								myForm3.enableItem("sliderBoxDel_"+index);
+								myForm3.enableItem("sliderDel_"+index);
+								mySliderDel[index-1].enable();
+								sliderDel[index-1].enable();
+								for(var jk=0; jk<taskNum; jk++){
+									myForm3.disableItem("sliderBox_" + index);
+									myForm3.disableItem("sliderBoxRand_" + index);
+									myForm3.disableItem("indel_"+index);
+									mySlider[index-1].disable();
+									mySliderRand[index-1].disable();
+								}
+							}
+						     }
+						});
+							
+						return false;
+						};
+						myGrid3.attachEvent("onGridReconstructed",function(){this.setSizes()});
+						myGrid3.rowToDragElement = function (id){
+							if(this.cells(id,2).getValue()!="")
+								return this.cells(id,2).getValue()+"/"+this.cells(id,1).getValue();
+							return this.cells(id,1).getValue();
+						}
+
+
+					});
+				  }
+
+				  else if(id=="expBeha"){
+					Layout_Temp.setText('Export behaviour');
+					var layout_beh = Layout_Temp.attachLayout('2E');
+					var cell_Sid = layout_beh.cells('a');
+					cell_Sid.setText('Select neighbourhood -> behaviour -> configurations');
+					cell_Sid.setHeight(400);
+					var cell_Exp = layout_beh.cells('b');
+					cell_Exp.setText('Export Selected Behaviour');
+					cell_Exp.setHeight(100);	
+					cell_Exp.appendObject("buttExport");			
+					var mySidebar = cell_Sid.attachSidebar();
+					mySidebar.loadStruct("data/d-xml/sideNeigh.xml");
+					
+					mySidebar.attachEvent("onSelect", function(id, lastId){
+						var neighCell = mySidebar.cells(id);
+						//global variable sidebar for export
+						behSidebar = neighCell.attachSidebar();
+						behSidebar.loadStruct("data/d-xml/sideBeh.xml?id="+id);
+						behSidebar.attachEvent("onSelect", function(id, lastId){
+							var bid = id;
+							var behCell = behSidebar.cells(id);
+							var confSidebar = behCell.attachSidebar();
+							confSidebar.loadStruct("data/d-xml/sideConf.xml?id="+bid);
+							confSidebar.attachEvent("onSelect", function(id, lastId){
+								var confCell = confSidebar.cells(id);
+								var tasks = confCell.attachGrid();
+								tasks.setImagePath("./codebase/imgs/");                         
+								tasks.setHeader("#Task,Multiplicity,Model,Model Date,EST gen");
+								tasks.setInitWidths("80,80,80,150,150");          
+								tasks.setColAlign("right,right,left,left,left");       
+								tasks.setColTypes("ro,ro,ro,ro,ro");                
+								tasks.setColSorting("int,int,str,str,str");
+								tasks.init();
+								tasks.load("data/d-xml/tasks.xml?id="+id+"&bid="+bid, "xml");
+							});
+						});
+					});
+				}
+				else if(id=="viewNeigh"){
+					Layout_Temp.setText('View Neighbourhood details');
+					var layout_vne = Layout_Temp.attachLayout('2E');
+					var cell_neSid = layout_vne.cells('a');
+					cell_neSid.setText('Select neighbourhood');
+					cell_neSid.setHeight(400);
+					var cell_Params = layout_vne.cells('b');
+					cell_Params.setText('Device Parameters');
+					//cell_Exp.setHeight(100);	
+					var viewSidebar = cell_neSid.attachSidebar();
+					viewSidebar.loadStruct("data/d-xml/sideNeigh.xml");
+					
+					viewSidebar.attachEvent("onSelect", function(id, lastId){
+						var neighCell = viewSidebar.cells(id);
+						//global variable sidebar for export
+						viewGrid = neighCell.attachGrid();
+						viewGrid.setImagePath("./codebase/imgs/");                         
+						viewGrid.setHeader("Instance ID,Template ID,Template Name,Type,Class");
+						//the headers of columns          
+						viewGrid.setInitWidths("80,58,250,150,100");          
+						//the widths of columns          
+						viewGrid.setColAlign("right,right,left,left,left");       
+						//the alignment of columns           
+						viewGrid.setColTypes("ro,ro,ro,ro,ro");                
+						//the types of columns          
+						viewGrid.setColSorting("int,int,str,str,str");          
+						//the sorting types
+						viewGrid.init();
+						viewGrid.load("data/d-xml/viewNeigh.xml?id="+id, "xml");
+						viewGrid.attachEvent("onSelect", function(id, lastId){
+						});
+					});
+				
+				}
+				  				
+				});
+					 
+			}
+			function sendData(){
+				var tuples="";
+				var name = document.getElementById("neighName");
+				if (name.value.length<1) return false;
+				myGrid.forEachRow(function(id){	
+					var tuple = myGrid.cells(id, 0).getValue() + "*" + myGrid.cells(id, 1).getValue();
+						if (tuples.length>0)
+								tuples = tuples + "@" + tuple;
+							else
+								tuples = tuple;	
+					//console.log(myGrid.cells(id, 2).getValue());				
+								
+							});
+				var r=dhx4.ajax.post("data/php/addNeigh.php", "name="+name.value+"&tuples="+tuples);
+				window.location.replace("http://localhost/Configurator/");
+				//console.log(r);	
+			}
+			function sendDataBeh(){
+				var rows="";
+				var name = document.getElementById("behaName");
+				var neigh = myCombo.getSelectedValue();
+				if (name.value.length<1) return false;
+				myGrid3.forEachRow(function(id){	
+					
+					var row = myGrid3.cells(id, 0).getValue() + "*" + myGrid3.cells(id, 1).getValue() + "*" + myGrid3.cells(id, 2).getValue() + "*" + myGrid3.cells(id, 3).getValue() + "*" + myGrid3.cells(id, 4).getValue() + "*" + myGrid3.cells(id, 5).getValue() + "*" + myGrid3.cells(id, 6).getValue() + "*" + myGrid3.cells(id, 7).getValue() + "*" + myGrid3.cells(id, 8).getValue();
+						if (rows.length>0)
+								rows = rows + "@" + row;
+							else
+								rows = row;	
+							
+								
+							});
+				var r=dhx4.ajax.post("data/php/addBeha.php", "name="+name.value+"&neigh="+neigh+"&rows="+rows);
+				window.location.replace("http://localhost/Configurator/");
+				//console.log(r);	
+			}
+			function exportBeh(){
+				//console.log(behSidebar.getActiveItem());
+				var r=dhx4.ajax.post("data/php/export.php", "bid="+behSidebar.getActiveItem());
+				window.location.replace("http://localhost/Configurator/");
+			}		
+        </script>
+		
+    </head>
+<body>	
+	<div id="winVP" style="display: none;"></div>
+	<div id="winVP2" style="display: none;"></div>
+	<div id="combo_zone3" style="display: none;"></div>
+	<div id="buttGrid" style="display: none;">Insert Neighbourhood name:&nbsp;&nbsp;<input id="neighName" type="text"/><br><input type="button" value="Create" onClick="sendData();"/></div>
+	<div id="buttBehaviour" style="display: none;">Insert Behaviour name:&nbsp;&nbsp;<input id="behaName" type="text"/><br><input type="button" value="Create" onClick="sendDataBeh();"/></div>
+<div id="buttExport" style="display: none;"><input type="button" value="Export" onClick="exportBeh();"/></div>
+</body>
+</html>

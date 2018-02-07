@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<menu>
+	<item id="device" text="Device" img="device.png">
+		<item id="newDevice" text="New Device" img="new.gif" imgdis="new_dis.gif"/>
+		<item id="file_sep_1" type="separator"/>
+		<item id="import" text="Import New Device Type" img="undo.gif" imgdis="undo_dis.gif"/>
+		<!--
+		<item id="export" text="Export" img="redo.gif" imgdis="redo_dis.gif"/>
+		<item id="file_sep_2" type="separator"/> 
+		<item id="log_Out" text="LogOut" img="close.gif" imgdis="close_dis.gif"/> -->
+	</item>
+	
+	<item id="neigh" text="Neighbourhood" img="neigh.png">
+		<item id="newNeigh" text="New" img="new.gif"/>
+		<item id="viewNeigh" text="View" img="docum.png"/>
+
+	</item>
+
+	<item id="beha" text="Behaviour" img="beha.png">
+		<item id="newBeha" text="New" img="new.gif"/>
+		<item id="expBeha" text="Export" img="arrow.gif"/>
+
+	</item>
+	
+</menu>

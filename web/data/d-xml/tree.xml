@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?php
+Header('Content-Type: application/xhtml+xml; charset=utf-8');
+?>
+<tree id="0">	
+	<item text="Products" id="Products">
+			<?php 
+			require '../php/connection.php';
+                        echo '<item text="Production" id="Production">';
+			echo '<item text="PV" id="PV">';
+			
+			$query1="SELECT  * from template where class='pv';";
+			$res1 = mysqli_query($con,$query1) or die("BAD SQL");
+			$num_righe1=mysqli_num_rows($res1);
+			
+			for($i=0;$i<$num_righe1;$i++) {
+				$row1 = mysqli_fetch_array($res1);	
+				echo '<item text="'.$row1[1].'" id="'.$row1[0].'"/>';
+			}
+			echo '</item></item>';
+			echo '<item text="Consumption" id="Consumption">';
+			echo '<item text="Continuous" id="Continuous">';
+			
+			$query2="SELECT  * from template where class='continuos';";
+			$res2 = mysqli_query($con,$query2) or die("BAD SQL");
+			$num_righe2=mysqli_num_rows($res2);
+			
+			for($i=0;$i<$num_righe2;$i++) {
+				$row2 = mysqli_fetch_array($res2);	
+				echo '<item text="'.$row2[1].'" id="'.$row2[0].'"/>';
+			}
+			echo '</item>';
+
+			echo '<item text="Single run" id="singlerun">';
+			
+			$query3="SELECT  * from template where class='singlerun';";
+			$res3 = mysqli_query($con,$query3) or die("BAD SQL");
+			$num_righe3=mysqli_num_rows($res3);
+			
+			for($i=0;$i<$num_righe3;$i++) {
+				$row3 = mysqli_fetch_array($res3);	
+				echo '<item text="'.$row3[1].'" id="'.$row3[0].'"/>';
+			}
+			echo '</item></item>';
+	
+			?></item>	
+	
+</tree>

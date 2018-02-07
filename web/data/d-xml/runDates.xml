@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?php
+Header('Content-Type: application/xhtml+xml; charset=utf-8');
+?>
+<complete> 
+
+<?php
+			require '../php/connection.php';
+                        
+			$temp_id=$_GET["template"];
+			$program=$_GET["val"];
+			$query_inst="SELECT id, formula, start from profile where temp_id=" . $temp_id . " and model='run' and mode=" . $program . ";";
+			$res_inst = mysqli_query($con, $query_inst);
+			$num_righe=mysqli_num_rows($res_inst);
+			$opened=0;
+			$data="";
+			for($i=0;$i<$num_righe;$i++) {
+				$row = mysqli_fetch_array($res_inst);
+				if(!$opened){
+					$file = json_decode($row[1], true);
+					$fileName = $file["filename"];
+					$lines = file($_SERVER["DOCUMENT_ROOT"] . "/Configurator/timeseries/" . $fileName);//file in to an array
+					//$handle = fopen($_SERVER["DOCUMENT_ROOT"] . "/Configurator/timeseries/" . $fileName, "r");
+					//$data = fgetcsv($handle, " ");					
+					$opened=1;
+				}
+								    
+				$data = explode(" ", $lines[$row[2]]);
+				echo '<option value="' . $row[0] . '">' . date('Y/m/d H:i:s',  $data[0]) . '</option>';
+				
+				
+			}
+				
+mysqli_close($con);
+				
+?>
+    
+    
+</complete>

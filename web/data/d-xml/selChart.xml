@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<?php
+Header('Content-Type: application/xhtml+xml; charset=utf-8');
+?>
+<items>
+	<item type="settings" position="label-left" labelWidth="60" inputWidth="120" offsetLeft="20"/>
+	
+	<item type="label" label="Select Run" labelWidth="auto" offsetLeft="3"/>
+	<item type="combo" label="Runs" comboType="image" name="runs" comboImagePath="codebase/imgs/formCombos/">
+		
+		<?php
+			require '../php/connection.php';
+			$deviceid=$_GET["id"];
+			$query="select run_ID from samplesruns where device_ID=".$deviceid."";
+			$res = mysqli_query($con,$query) or die("BAD SQL");
+			$num_righe=mysqli_num_rows($res);
+			for($i=0;$i<$num_righe;$i++) {
+					$row = mysqli_fetch_array($res);
+					//row[0] contiene il run ID
+					echo ' <option value="'.$row[0].'" img="arrow.gif" text="'.$row[0].'"></option> ';
+			}
+			
+			
+			
+
+		?>
+	</item>
+	
+	<item type="label" label="Select Energy/Power" labelWidth="auto" offsetTop="10" offsetLeft="3"/>
+	<item type="combo" label="e/p" comboType="image" name="ep" comboImagePath="codebase/imgs/formCombos/">
+		<option value="p" img="arrow.gif" text="p"/>
+		<option value="e" img="arrow.gif" text="e" selected="true"/>
+	</item>
+	
+	<item type="label" label="Select step" labelWidth="auto" offsetTop="10" offsetLeft="3"/>
+	<item type="combo" label="Step" comboType="image" name="steps" comboImagePath="codebase/imgs/formCombos/">
+		<option value="30" img="arrow.gif" text="30sec" selected="true"/>
+		<option value="60" img="arrow.gif" text="60sec"/>
+		<option value="1800" img="arrow.gif" text="30min" />
+		<option value="3600" img="arrow.gif" text="1h" />
+		<option value="21600" img="arrow.gif" text="6h" />
+		<option value="43200" img="arrow.gif" text="12h" />
+		<option value="86400" img="arrow.gif" text="24h" />
+		<option value="172800" img="arrow.gif" text="48h" />
+		<option value="345600" img="arrow.gif" text="4day" />
+		
+	</item>
+	
+	<item type="button" value="Send" name="send" offsetTop="20" offsetLeft="120"></item>
+	
+	<item type="label" label="Click to view Full Profile Device" labelWidth="auto" offsetTop="50"/>
+	<item type="button" value="Get Profile" name="getprofile" offsetTop="1" offsetLeft="65"></item>
+	
+	
+	
+	
+</items>

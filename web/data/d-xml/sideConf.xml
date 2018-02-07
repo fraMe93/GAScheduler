@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?php
+Header('Content-Type: application/xhtml+xml; charset=utf-8');
+?>
+<sidebar>
+<?php
+	require '../php/connection.php';
+	$beh=$_GET["id"];
+	$query="SELECT num, dev_id from config where beh_id=" . $beh . ";";
+	$res = mysqli_query($con,$query) or die("BAD SQL");
+	$num_righe=mysqli_num_rows($res);
+	for($i=0;$i<$num_righe;$i++) {
+		$row = mysqli_fetch_array($res);
+		$query_dev="SELECT name from template where dev_id=" . $row[1] . ";";
+		$res_dev = mysqli_query($con,$query_dev) or die("BAD SQL");
+		$value = mysqli_fetch_row($res_dev);
+		echo '<item id="' . $row[0] . '" text="' . $value[0] . '" icon="codebase/imgs/custom/device.png"/>';
+    	}
+    //<item type="separator"/>
+    
+?>
+</sidebar>

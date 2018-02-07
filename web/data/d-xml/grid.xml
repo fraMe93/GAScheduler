@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?php
+Header('Content-Type: application/xhtml+xml; charset=utf-8');
+?>
+<rows>
+	
+	
+	<?php 
+			require '../php/connection.php';
+                        //query parameter by ID device
+			$query="SELECT  parameter,value from device_parameter_value WHERE id_device='".$_GET["id"]."';";
+			$res = mysqli_query($con,$query) or die("BAD SQL");
+			$num_righe=mysqli_num_rows($res);
+				for($i=0;$i<$num_righe;$i++) {
+					$row = mysqli_fetch_array($res);	
+					//row[0] contiene il nome parametro, row[1] contiene valore del parametro
+					echo '<row id="'.$i.'">';
+						echo '<cell>'.$row[0].'</cell>';
+						echo '<cell>'.$row[1].'</cell>';
+					echo '</row>';
+				}	
+	
+		?>
+</rows>

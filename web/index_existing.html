@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+    <head>
+		<meta charset="UTF-8" /> 
+	
+        <script src="codebase/dhtmlx.js" type="text/javascript"></script>
+        <link rel="STYLESHEET" type="text/css" href="codebase/dhtmlx.css">
+	
+        <style>
+    /*these styles allow Layout to work in Full Screen mode correctly in any browser*/
+            html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0px;
+                overflow: hidden;
+                background-color:white;
+            }
+	    div#winVP {
+		position: relative;
+		width: 100%;
+		height: 100%;
+		overflow: hidden;
+	    }
+                        
+			
+        </style>
+ 
+        <script type="text/javascript">
+		
+			window.onload = function(){ 
+            //Here you'll put code of your application
+
+
+				window.dhx4.skin = 'dhx_skyblue';
+				var main_layout = new dhtmlXLayoutObject(document.body, '1C');
+				var Layout_Temp = main_layout.cells('a');
+				Layout_Temp.setText('');
+				
+				//### Main Menu ###
+				var Main_menu = main_layout.attachMenu();
+				Main_menu.setIconsPath('codebase/imgs/custom/');	
+				Main_menu.loadStruct('data/s-xml/menu.xml');
+				
+				Main_menu.attachEvent("onClick", function(id){
+				  if(id=="newNeigh"){
+					Layout_Temp.setText('Create new neighbourhood');
+					var layout_trees = Layout_Temp.attachLayout('3J');
+					var cell_Tree1 = layout_trees.cells('a');
+					cell_Tree1.setText('Templates');
+					cell_Tree1.setHeight("300");
+					var myTree = cell_Tree1.attachTree();
+					myTree.enableDragAndDrop(true);
+					myTree.enableMercyDrag(true);
+					myTree.enableCheckBoxes(false);
+					myTree.setImagePath('codebase/imgs/dhxtree_'+dhx4.skin.replace(/^dhx_/,'')+'/');
+					myTree.setDragHandler(maf);
+					myTree.enableSmartXMLParsing(true);
+					myTree.load('data/d-xml/tree.xml','xml');
+					var cell_Grid = layout_trees.cells('b');
+					cell_Grid.setText('Devices instances');
+					var cell_Param = layout_trees.cells('c');
+					cell_Param.setText('Devices parameters');
+					myGrid = cell_Grid.attachGrid();
+					
+					//myGrid = new dhtmlXGridObject('gridbox'); 
+					//the path to images required by grid         
+					myGrid.setImagePath("./codebase/imgs/");                         
+					myGrid.setHeader("Instance ID,Template ID,Template Name,Type,Class");
+					//the headers of columns          
+					myGrid.setInitWidths("80,58,250,150,100");          
+					//the widths of columns          
+					myGrid.setColAlign("right,right,left,left,left");       
+					//the alignment of columns           
+					myGrid.setColTypes("ro,ro,ro,ro,ro");                
+					//the types of columns          
+					myGrid.setColSorting("int,int,str,str,str");          
+					//the sorting types        
+					myGrid.enableDragAndDrop(true);
+					myGrid.init();
+					
+					//cell_Grid.showView("win");
+					//cell_Grid.attachObject("winVP");
+					//dhxWins = new dhtmlXWindows();
+					//dhxWins.attachViewportTo("winVP");
+					//w1 = dhxWins.createWindow("w1", 10, 10, 400, 350);
+					//w1.attachEvent("onClose", function(){
+    					//	cell_Grid.showView("def");
+					//});
+					//w1.denyResize();
+					myGrid.treeToGridElement = function(treeObj,treeNodeId,gridRowId){
+						
+						formData = [
+						{type: "label", label: "Select New or Existing", position: "label-left", labelWidth: 100, inputWidth: 120},
+						{type: "block", inputWidth: "auto", offsetTop: 12, list: [
+							{type: "radio", name: "effect", label: "New instance", value: "newInstance", 
+       								position:"label-right"},
+    							{type: "radio", name: "effect", label: "Existing instance from another neighbourhood", value: "existInstance", 
+       								checked:"true", position:"label-right"},
+							{type: "button", value: "Proceed", offsetLeft: 70, offsetTop: 14}
+						]}
+						];
+						cell_Grid.showView("win");
+						cell_Grid.attachObject("winVP");
+						dhxWins = new dhtmlXWindows();
+						dhxWins.attachViewportTo("winVP");
+						w1 = dhxWins.createWindow("w1", 10, 10, 400, 350);
+						w1.attachEvent("onClose", function(){
+    							cell_Grid.showView("def");
+						});
+						w1.denyResize();
+						myForm = w1.attachForm(formData, true);
+						//var t;
+						myForm.attachEvent("onButtonClick", function(name){
+						     var sel = myForm.getCheckedValue('effect');
+						     if (sel == "newInstance"){
+							var ids = "";
+							dhxWins2 = new dhtmlXWindows();
+							dhxWins2.attachViewportTo("winVP");
+							w2 = dhxWins2.createWindow("w2", 10, 10, 400, 350);
+							w2.attachEvent("onClose", function(){
+	    							cell_Grid.showView("def");
+							});
+							w2.denyResize();
+							//myGrid = w2.attachGrid();
+							
+							myGrid.forEachRow(function(id){							
+								//console.log(myGrid.cells(id, 0).getValue());
+								if((myGrid.cells(id, 0).getValue().length)<1)
+										myGrid.deleteRow(id);
+								else{
+									var cellObj = myGrid.cells(id, 1);
+									if (ids.length>0)
+										ids = ids + "*" + cellObj.getValue();
+									else
+										ids = cellObj.getValue();
+								}
+							});
+							if (ids.length>0)
+								ids = ids + "*" + treeNodeId;
+							else
+								ids = treeNodeId;
+							//console.log(ids);
+            						
+							cell_Grid.showView("def");
+							
+							myGrid.updateFromXML("data/d-xml/addNeighDevice.xml?ids="+ids);
+							cell_Grid.appendObject("buttGrid");
+							//var r=dhx4.ajax.getSync("data/php/row.php?ids="+ids);
+							//t = dhx4.s2j(r.xmlDoc.responseText);
+							//if (t != null) {
+							//	myGrid.forEachRow(function(id){						
+							//	//console.log(myGrid.cells(id, 0).getValue());
+							//		if((myGrid.cells(id, 0).length)<1)
+							//			myGrid.deleteRow(id);
+							//	});
+								//myGrid.addRow(t.instance+"*"+t.temp_id, t.instance + ","+ t.temp_id+","+ t.name+","+ t.type+","+ t.class);
+							
+							//} else {
+							//	// response is not in json format
+							//}
+							////return [t.instance, t.temp_id, t.name, t.type, t.class];
+						      }
+						      //TODO existing else{
+							//dhxWins2 = new dhtmlXWindows();
+							//dhxWins2.attachViewportTo("winVP");
+							//w2 = dhxWins2.createWindow("w2", 10, 10, 400, 350);
+							//w2.attachEvent("onClose", function(){
+	    						//	cell_Tree2.showView("def");
+							//});
+							//w2.denyResize();
+							//myForm2 = w2.attachForm();
+							////myForm2 = new dhtmlXForm("form_container");
+            						//myForm2.load("data/d-xml/addNeighDevice.xml", "xml");
+							//}
+						});
+						return [];
+					};
+					myGrid.attachEvent("onGridReconstructed",function(){this.setSizes()});
+					myGrid.rowToDragElement = function (id){
+						if(this.cells(id,2).getValue()!="")
+							return this.cells(id,2).getValue()+"/"+this.cells(id,1).getValue();
+						return this.cells(id,1).getValue();
+					}
+					
+					function maf(){
+						return false;
+					}
+					
+				  }
+				  else if(id=="newBeha"){
+					Layout_Temp.setText('Create new behaviour');
+					var layout_beh = Layout_Temp.attachLayout('3J');
+					var cell_Sel = layout_beh.cells('a');
+					cell_Sel.setText('Select neighbourhood');
+					cell_Sel.setHeight("100");
+					myCombo = cell_Sel.attachObject("combo_zone3");
+					var t=dhx4.ajax.postSync("data/php/combo.php");
+					r = t.xmlDoc.responseText;
+					var tuples = r.split("@");
+					myCombo = new dhtmlXCombo("combo_zone3","alfa3",200);
+					
+					for (i = 0; i < tuples.length; i++) {
+   						myCombo.addOption([
+						 {value:tuples[i].split("*")[0], text:tuples[i].split("*")[1]},
+						]);
+					}
+					myCombo.enableFilteringMode(true);
+					myCombo.attachEvent("onChange", function(value, text){
+						var cell_Grid2 = layout_beh.cells('c');
+						cell_Grid2.setText('Neighbourhood instances');
+						myGrid2 = cell_Grid2.attachGrid();
+						myGrid2.setImagePath("./codebase/imgs/");                         
+						myGrid2.setHeader("Instance ID,Template ID,Template Name,Type,Class");
+						myGrid2.setInitWidths("80,58,250,150,100");          
+						myGrid2.setColAlign("right,right,left,left,left");       
+						myGrid2.setColTypes("ro,ro,ro,ro,ro");                
+						myGrid2.setColSorting("int,int,str,str,str");          
+						myGrid2.enableDragAndDrop(true);
+						myGrid2.enableMercyDrag(true);
+						myGrid2.init();
+						//snippet just copies the data, without applying any modifications to it
+						//myGrid2.gridToGrid = function(rowId,sgrid,tgrid){
+						//
+						//return [];
+						//};
+						//myGrid2.attachEvent("onGridReconstructed",function(){this.setSizes()});
+						//myGrid2.rowToDragElement = function (id){
+						//	if(this.cells(id,2).getValue()!="")
+						//		return this.cells(id,2).getValue()+"/"+this.cells(id,1).getValue();
+						//	return this.cells(id,1).getValue();
+						//}
+						myGrid2.load("data/d-xml/data.xml?id="+value, "xml");
+
+						//right GRID
+						var cell_Grid3 = layout_beh.cells('b');
+						cell_Grid3.setText('Configurations');
+						myGrid3 = cell_Grid3.attachGrid();
+					
+						myGrid3.setImagePath("./codebase/imgs/");                         
+						myGrid3.setHeader("Instance ID,Template ID,Task,Model,Model ID,Program, Date, EST, LST");
+						myGrid3.setInitWidths("80,100,80,80,100,100,100,100,100");          
+						myGrid3.setColAlign("right,right,left,left,left,left,left,left,left");       
+						myGrid3.setColTypes("ro,ro,ro,ro,ro,ro,ro,coro,coro");                
+						myGrid3.setColSorting("int,int,int,str,int,int,str,str,str");
+						//set values for select box in 5th column
+						var comboboxEST = myGrid3.getCombo(7);
+						var comboboxLST = myGrid3.getCombo(8);
+						comboboxEST.put("00","00");
+						comboboxEST.put("01","01");
+						comboboxEST.put("02","02");
+						comboboxEST.put("03","03");
+						comboboxEST.put("04","04");
+						comboboxEST.put("05","05");
+						comboboxEST.put("06","06");
+						comboboxEST.put("07","07");
+						comboboxEST.put("08","08");
+						comboboxEST.put("09","09");
+						comboboxEST.put("10","10");
+						comboboxEST.put("11","11");
+						comboboxEST.put("12","12");
+						comboboxEST.put("13","13");
+						comboboxEST.put("14","14");
+						comboboxEST.put("15","15");
+						comboboxEST.put("16","16");
+						comboboxEST.put("17","17");
+						comboboxEST.put("18","18");
+						comboboxEST.put("19","19");
+						comboboxEST.put("20","20");
+						comboboxEST.put("21","21");
+						comboboxEST.put("22","22");
+						comboboxEST.put("23","23");
+						comboboxEST.put("24","24");
+
+						comboboxLST.put("00","00");
+						comboboxLST.put("01","01");
+						comboboxLST.put("02","02");
+						comboboxLST.put("03","03");
+						comboboxLST.put("04","04");
+						comboboxLST.put("05","05");
+						comboboxLST.put("06","06");
+						comboboxLST.put("07","07");
+						comboboxLST.put("08","08");
+						comboboxLST.put("09","09");
+						comboboxLST.put("10","10");
+						comboboxLST.put("11","11");
+						comboboxLST.put("12","12");
+						comboboxLST.put("13","13");
+						comboboxLST.put("14","14");
+						comboboxLST.put("15","15");
+						comboboxLST.put("16","16");
+						comboboxLST.put("17","17");
+						comboboxLST.put("18","18");
+						comboboxLST.put("19","19");
+						comboboxLST.put("20","20");
+						comboboxLST.put("21","21");
+						comboboxLST.put("22","22");
+						comboboxLST.put("23","23");
+						comboboxLST.put("24","24");
+						myGrid3.enableDragAndDrop(true);
+						myGrid3.init();
+						myGrid3.gridToGrid = function(rowId,sgrid,tgrid){
+							var instance=sgrid.cells(rowId,0).getValue();
+							var template=sgrid.cells(rowId,1).getValue();
+							taskNum = 1;
+							formData2 = [
+						{type: "label", label: "Configure instance tasks", position: "label-left", labelWidth: 150, inputWidth: 120},
+						{type: "block", inputWidth: "auto", offsetTop: 12, list: [
+							{type: "label", label: "Task " + taskNum, position: "label-left", labelWidth: 100, inputWidth: 120},
+							{type: "combo", label: "Program: ", name: "program_1", connector: "data/php/programConnector.php?template="+template, inputWidth: "100"},
+    							{type: "combo", label: "Run date: ", name: "date_1", inputWidth: "150"},
+							{type: "radio", name: "constraints_1", label: "Select later", value: "later", 
+       								checked:"true", position:"label-right"},
+    							{type: "radio", name: "constraints_1", label: "Random", value: "rand", 
+       								position:"label-right"},
+							{type: "radio", name: "constraints_1", label: "Random with delay", value: "randDel", 
+       								position:"label-right"},
+							
+						]},
+						{type: "button", name: "add", value: "Add Task", offsetLeft: 70, offsetTop: 14},
+						{type: "button", name: "create", value: "Create configuration", offsetLeft: 70, offsetTop: 14}
+						];
+						
+						cell_Grid3.showView("win");
+						cell_Grid3.attachObject("winVP");
+						dhxWins2 = new dhtmlXWindows();
+						dhxWins2.attachViewportTo("winVP");
+
+						w1 = dhxWins2.createWindow("w1", 10, 10, 450, 550);
+						w1.attachEvent("onClose", function(){
+    							cell_Grid3.showView("def");
+						});
+						w1.denyResize();
+						myForm3 = w1.attachForm(formData2, true);
+						//var t;
+						var comboRun = myForm3.getCombo("date_1");
+						comboRun.attachEvent("onChange", function(value, text){
+													
+						});
+						var comboConf = myForm3.getCombo("program_1");
+						comboConf.attachEvent("onChange", function(value, text){
+							comboRun.load("data/d-xml/runDates.xml?val="+value+"&template="+template);					
+						});
+						myForm3.attachEvent("onButtonClick", function(name){
+							if(name=="add"){
+								taskNum++;
+								
+								var itemData = 
+								{type: "label", label: "Task " + taskNum, list:[
+									{type: "combo", label: "Program: ", name: "program_" + taskNum, connector: "data/php/programConnector.php?template="+template, inputWidth: "100"},
+		    							{type: "combo", label: "Run date: ", name: "date_" + taskNum, inputWidth: "150"},
+									{type: "radio", name: "constraints_" + taskNum, label: "Select later", value: "later", checked:"true", position:"label-right"},
+    									{type: "radio", name: "constraints_" + taskNum, label: "Random", value: "rand", position:"label-right"},
+									{type: "radio", name: "constraints_" + taskNum, label: "Random with delay", value: "randDel", position:"label-right"},
+								]};
+								//myForm3.removeItem("program");
+								myForm3.addItem(null, itemData, taskNum);
+								//myForm3.forEachItem(function(name){
+								//    console.log(name);
+								//});
+								var comboRun = myForm3.getCombo("date_" + taskNum);
+								comboRun.attachEvent("onChange", function(value, text){
+													
+								});
+								var comboConf = myForm3.getCombo("program_" + taskNum);
+								comboConf.attachEvent("onChange", function(value, text){
+									comboRun.load("data/d-xml/runDates.xml?val="+value+"&template="+template);					
+								});
+							}
+							else if(name=="create"){
+								dhxWins2 = new dhtmlXWindows();
+								dhxWins2.attachViewportTo("winVP");
+								w2 = dhxWins2.createWindow("w2", 10, 10, 400, 550);
+								w2.attachEvent("onClose", function(){
+			    						cell_Grid3.showView("def");
+								});
+								w2.denyResize();
+							
+								myGrid3.forEachRow(function(id){
+									
+									if((myGrid3.cells(id, 0).getValue().length)<1)
+											myGrid3.deleteRow(id);
+								});				
+			    						
+								cell_Grid3.showView("def");
+								for(var k=1; k<=taskNum; k++){
+									var dhxComboProg = myForm3.getCombo("program_" + k);
+									var dhxComboDate = myForm3.getCombo("date_" + k);
+									var program = dhxComboProg.getSelectedText();
+									var date = dhxComboDate.getSelectedText();
+									
+									myGrid3.addRow(instance+template+k,instance+","+template+","+k+","+"run"+","+dhxComboDate.getSelectedValue()+","+program+","+date);
+								}
+							cell_Grid3.appendObject("buttBehaviour");
+							}
+						});
+							
+						return false;
+						};
+						myGrid3.attachEvent("onGridReconstructed",function(){this.setSizes()});
+						myGrid3.rowToDragElement = function (id){
+							if(this.cells(id,2).getValue()!="")
+								return this.cells(id,2).getValue()+"/"+this.cells(id,1).getValue();
+							return this.cells(id,1).getValue();
+						}
+
+
+					});
+				  }
+				
+				  				
+				});
+					 
+			}
+			function sendData(){
+				var tuples="";
+				var name = document.getElementById("neighName");
+				if (name.value.length<1) return false;
+				myGrid.forEachRow(function(id){	
+					var tuple = myGrid.cells(id, 0).getValue() + "*" + myGrid.cells(id, 1).getValue();
+						if (tuples.length>0)
+								tuples = tuples + "@" + tuple;
+							else
+								tuples = tuple;	
+					//console.log(myGrid.cells(id, 2).getValue());				
+								
+							});
+				var r=dhx4.ajax.post("data/php/addNeigh.php", "name="+name.value+"&tuples="+tuples);
+				window.location.replace("http://localhost/Configurator/");
+				//console.log(r);	
+			}
+			function sendDataBeh(){
+				var rows="";
+				var name = document.getElementById("behaName");
+				var neigh = myCombo.getSelectedValue();
+				if (name.value.length<1) return false;
+				myGrid3.forEachRow(function(id){	
+					var est = myGrid3.cells(id, 7).getValue();
+					var lst = myGrid3.cells(id, 8).getValue();
+					if(est.length<1) est = 00;
+					if(lst.length<1) lst = 24;
+					var row = myGrid3.cells(id, 0).getValue() + "*" + myGrid3.cells(id, 1).getValue() + "*" + myGrid3.cells(id, 2).getValue() + "*" + myGrid3.cells(id, 3).getValue() + "*" + myGrid3.cells(id, 4).getValue() + "*" + myGrid3.cells(id, 5).getValue() + "*" + myGrid3.cells(id, 6).getValue() + "*" + est + "*" + lst;
+						if (rows.length>0)
+								rows = rows + "@" + row;
+							else
+								rows = row;	
+							
+								
+							});
+				var r=dhx4.ajax.post("data/php/addBeha.php", "name="+name.value+"&neigh="+neigh+"&rows="+rows);
+				window.location.replace("http://localhost/Configurator/");
+				//console.log(r);	
+			}		
+        </script>
+		
+    </head>
+<body>	
+	    
+	<div id="winVP" style="display: none;"></div>
+	<div id="winVP2" style="display: none;"></div>
+	<div id="combo_zone3" style="display: none;"></div>
+	<div id="buttGrid" style="display: none;">Insert Neighbourhood name:&nbsp;&nbsp;<input id="neighName" type="text"/><br><input type="button" value="Create" onClick="sendData();"/></div>
+	<div id="buttBehaviour" style="display: none;">Insert Behaviour name:&nbsp;&nbsp;<input id="behaName" type="text"/><br><input type="button" value="Create" onClick="sendDataBeh();"/></div>
+</body>
+</html>

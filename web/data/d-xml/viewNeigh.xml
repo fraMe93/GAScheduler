@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?php
+Header('Content-Type: application/xhtml+xml; charset=utf-8');
+?>
+<rows> 
+
+<?php
+			require '../php/connection.php';
+			$neighbourhoodID=$_GET["id"];
+			$query_inst="SELECT * from composition where neigh_id=" . $neighbourhoodID . ";";
+			$res_inst = mysqli_query($con, $query_inst);
+			$num_righe=mysqli_num_rows($res_inst);
+			for($i=0;$i<$num_righe;$i++) {
+				$row = mysqli_fetch_array($res_inst);	
+				$query="SELECT * from template where dev_id=" . $row[0] . ";";
+				$res = mysqli_query($con,$query) or die("BAD SQL");
+				$value = mysqli_fetch_row($res);
+				echo '<row id = "' . $row[0] . $row[1] . $row[2] . '"><cell>' . $row[2] . '</cell>
+						<cell>' . $row[0] . '</cell>
+						<cell>' . $value[1] . '</cell>
+						<cell>' . $value[3] . '</cell>
+						<cell>' . $value[2] . '</cell></row>';
+			}
+				
+mysqli_close($con);
+				
+?>
+    
+    
+</rows>
+			

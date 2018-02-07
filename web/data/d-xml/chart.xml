@@ -1,0 +1,60 @@
+<?php
+Header('Content-Type: application/xhtml+xml; charset=utf-8');
+?>
+<data>	
+<?php 
+
+		require '../php/connection.php';
+		$deviceid=$_GET["id"];
+		$run_ID=$_GET["run_ID"];
+		$unit=$_GET["unit"];
+		
+		$query="SELECT template from device_list where device_id=".$deviceid." ";
+		$res = mysqli_query($con,$query) or die("BAD SQL");
+		$obj=mysqli_fetch_object($res);
+		$idtemplate= $obj->template;
+		
+
+		
+		$query="SELECT samples.number, samples.value from samples where template=$idtemplate and run_ID='".$run_ID."'";
+		$res = mysqli_query($con,$query) or die("BAD SQL");
+		
+		$result="";
+		$energy = 0;
+		$x = 0;
+		$y = 0;
+		$i = 0;
+		if ($unit=='e'){
+			while($row = mysqli_fetch_array($res)){
+			
+				$energy = $energy + ((($row[1] + $y)/2 * ($row[0] - $x))/60);
+				$x = $row[0];
+				$temp = $x*60;
+				$y = $row[1];
+				echo '<item id="'.$i.'">';
+				echo '<energy>'.$energy.'</energy>';
+				echo '<seconds>'.$temp.'</seconds>';
+				echo '</item>';
+				$i=$i+1;
+				//$result=$result."".$temp." ".$energy."\n";
+			}
+		}
+		else{
+			while($row = mysqli_fetch_array($res)){
+				$x = $row[0];
+				$temp = $x*60;
+				$y = $row[1];
+				echo '<item id="'.$i.'">';
+				echo '<energy>'.$row[1].'</energy>';
+				echo '<seconds>'.$temp.'</seconds>';
+				echo '</item>';
+				$i=$i+1;
+				//$result=$result."".$row[0].",".$row[1]."\n";
+			}
+		}
+			//return $result;
+		
+		
+			
+?>
+</data>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?php
+Header('Content-Type: application/xhtml+xml; charset=utf-8');
+?>
+<rows> 
+
+<?php
+			require '../php/connection.php';
+                        //query template types
+			$deviceids=$_GET["ids"];
+			$id_arr = explode("*", $deviceids);
+			foreach ($id_arr as $id){
+				$counter = 0;
+				if (strlen($id) > 0){
+					
+					$query_inst="SELECT max(instance) from device where template=" . $id . ";";
+					$res_inst = mysqli_query($con,$query_inst) or die("BAD SQL");
+					$value = mysqli_fetch_row($res_inst);
+					if(isset($value))
+						$counter=$value[0];
+					else
+						$counter = 0;
+					$vals = array_count_values($id_arr);
+					$counter += $vals[$id]; 
+					$query="SELECT * from template where dev_id=" . $id . ";";
+					$res = mysqli_query($con,$query) or die("BAD SQL");
+					$num_righe=mysqli_num_rows($res);
+					for($i=0;$i<$num_righe;$i++) {
+						$row = mysqli_fetch_array($res);	
+						echo '<row id = "' . $counter . $row[0] . '"><cell>' . $counter . '</cell>
+						<cell>' . $row[0] . '</cell>
+						<cell>' . $row[1] . '</cell>
+						<cell>' . $row[2] . '</cell>
+						<cell>' . $row[3] . '</cell></row>';
+					}
+				}
+			}
+mysqli_close($con);
+				
+?>
+    
+    
+</rows>

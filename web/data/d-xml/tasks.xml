@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?php
+Header('Content-Type: application/xhtml+xml; charset=utf-8');
+?>
+<rows> 
+
+<?php
+			require '../php/connection.php';
+                        
+			$id=$_GET["id"];
+			$bid=$_GET["bid"];
+			$query="SELECT num, conf_temp, prof_model, prof_id, id from task where conf_num=" . $id . " and conf_behave=" . $bid . ";";
+			$res = mysqli_query($con,$query) or die("BAD SQL");
+			$num_righe=mysqli_num_rows($res);
+			$opened=0;
+			$data="";
+			for($i=0;$i<$num_righe;$i++) {
+				$row = mysqli_fetch_array($res);
+				$query_params="SELECT name, value from task_parameters where task_id=" . $row[4] . ";";
+				$res_params = mysqli_query($con,$query_params) or die("BAD SQL");
+				$num_righe_p=mysqli_num_rows($res_params);
+				$EST_data="";
+				$multiplicity="";
+				for($j=0;$j<$num_righe_p;$j++) {
+					$row_param = mysqli_fetch_array($res_params);
+					if($row_param[0]=="EST_data") $EST_data=$row_param[1];
+					else if($row_param[0]=="multiplicity") $multiplicity=$row_param[1];
+				}
+
+				$query_prof="SELECT formula, start from profile where temp_id=" . $row[1] . " and model='" . $row[2] . "' and id=" . $row[3] . ";";
+				$res_prof = mysqli_query($con,$query_prof) or die("BAD SQL");
+				$value = mysqli_fetch_row($res_prof);
+				if(!$opened){
+					$file = json_decode($value[0], true);
+					$fileName = $file["filename"];
+					$lines = file($_SERVER["DOCUMENT_ROOT"] . "/Configurator/timeseries/" . $fileName);//file in to an array
+					$opened=1;
+				}
+								    
+				$data = explode(" ", $lines[$value[1]]);
+				echo '<row id = "' . $row[0] . '"><cell>' . $row[0] . '</cell>
+						<cell>' . $multiplicity . '</cell>
+						<cell>' . $row[2] . '</cell>
+						<cell>' . date('Y/m/d H:i:s',  $data[0]) . '</cell>
+						<cell>' . $EST_data . '</cell></row>';
+			}
+mysqli_close($con);
+				
+?>
+    
+    
+</rows>

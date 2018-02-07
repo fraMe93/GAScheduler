@@ -1,0 +1,43 @@
+<?php
+Header('Content-Type: application/xhtml+xml; charset=utf-8');
+?>
+<data>	
+<?php 
+
+		require '../php/connection.php';
+		$prof_id=$_GET["id"];
+		$temp_id=$_GET["template"];
+		
+		$query_run="SELECT formula, start, stop from profile where temp_id=".$temp_id." and id=" . $prof_id . " and model='run';";
+		$res_run = mysqli_query($con,$query_run) or die("BAD SQL");
+		$ts = mysqli_fetch_row($res_run);
+		$file = json_decode($ts[0], true);
+		$fileName = $file["filename"];
+		$lines = file($_SERVER["DOCUMENT_ROOT"] . "/Configurator/timeseries/" . $fileName);//file in to an array
+		$firstline=1;
+		$starttime=0;
+		$prevarea=0;
+		for($j=$ts[1];$j<=$ts[2];$j++){				    					
+			$data = explode(" ", $lines[$j]);
+			if($firstline){
+				$starttime=$data[0];
+				$time=$data[0]-$starttime;
+				$value=0;
+				$firstline=0;
+			}
+			else{
+				$prev_data=explode(" ", $lines[$j-1]);
+				$time=$data[0]-$starttime;
+				//kWh
+				$actualarea=(($data[1]+$prev_data[1])*($data[0]-$prev_data[0]))/(2*3600*1000);
+				$prevarea=$prevarea+$actualarea;
+				//$value=($prevarea/3600)/1000;
+			}
+			echo '<item id="'.$j.'">';
+			echo '<energy>'.$prevarea.'</energy>';
+			echo '<seconds>'.$time.'</seconds>';
+			echo '</item>';
+		}
+			
+?>
+</data>

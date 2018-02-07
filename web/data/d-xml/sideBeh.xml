@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?php
+Header('Content-Type: application/xhtml+xml; charset=utf-8');
+?>
+<sidebar>
+<?php
+	require '../php/connection.php';
+	$neigh=$_GET["id"];
+	$query="SELECT id, name, time_window from behaviour where neigh=" . $neigh . ";";
+	$res = mysqli_query($con,$query) or die("BAD SQL");
+	$num_righe=mysqli_num_rows($res);
+	for($i=0;$i<$num_righe;$i++) {
+		$row = mysqli_fetch_array($res);	
+		echo '<item id="' . $row[0] . '" text="' . $row[1] . '" icon="codebase/imgs/custom/beha.png"/>';
+    	}
+    //<item type="separator"/>
+    
+?>
+</sidebar>

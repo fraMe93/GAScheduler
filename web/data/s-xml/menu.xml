@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<menu>
+	<item id="new" text="New">
+		<item id="newDevice" text="New Device" img="device.png"/>
+		<item id="newNeigh" text="New Neighbourhood" img="neigh.png"/>
+		<item id="newBeha" text="New Behaviour" img="beha.png"/>
+	</item>
+
+	<item id="view" text="View">
+		<item id="viewNeigh" text="View Neighbourhood" img="docum.png"/>
+		<item id="expBeha" text="View/Export Behaviour" img="arrow.gif"/>
+	</item>
+
+	<item id="import" text="Import">
+		<item id="importDev" text="Import New Device Type" img="undo.gif" imgdis="undo_dis.gif"/>
+	</item>	
+</menu>

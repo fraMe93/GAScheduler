@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import csv
 import sys
-import time
 
 def plotter(path):
 

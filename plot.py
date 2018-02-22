@@ -10,7 +10,9 @@ def plotter(path):
 	with open (path,"rb") as f:
 		data = csv.reader(f, delimiter=' ', quotechar='"')
 		for row in data:
+			#first column - time
 			xtime.append(row[0])
+			#second column - energy
 			yenergy.append(row[1])
 	
 	#conversione di X

@@ -7,48 +7,39 @@ import csv
 import shutil
 import smart_scheduler as sched
 
+
 host="ubuntu.local"
 database="./web/behaviours/allData"
 dirName=None
 fileName=None
 dirResults="./results"
 
-def getData1(b): #funzione per l'estrazione delle informazioni dal body dei messaggi
 
-	d = []
-	l=len(b)
-	for i in range(l):
-		if (b[i] == '['):
-			j=1
-			temp = b[i+j]
-			while (b[i+j+1] != ']'):
-				temp = temp+b[i+j+1]
-				j=j+1
-			d.append(temp)
-	return d
+def parsePV(b): #funzione per l'estrazione delle informazioni dal body dei messaggi CREATE_PRODUCER
 
-def getData2(b): #funzione per l'estrazione delle informazioni dal body dei messaggi
+	items = b.split(" ")
+	PID = items[2].split(":")
+	result = [PID[0][1:-1], PID[1][1:-1]]
+	return result
 
-	d = []
-	l=len(b)
-	for i in range(l):
-		if (b[i] == '['):
-			j=1
-			temp = b[i+j]
-			while (b[i+j+1] != ']'):
-				temp = temp+b[i+j+1]
-				j=j+1
-			d.append(temp)
-		if (b[i] == 'T'):
-			j=2
-			temp=b[i+j]
-			while (b[i+j+1] != ' '):
-				temp = temp+b[i+j+1]
-				j=j+1
-			d.append(temp)
-	return d
 
-'''class ProducerAgent(spade.Agent.Agent):
+def parseLoad1(b): #funzione per l'estrazione delle informazioni dal body dei messaggi CREATE_LOAD
+
+	items = b.split(" ")
+	CID = items[2].split(":")
+	result = [CID[0][1:-1],CID[1][1:-1],CID[2][1:-1],items[6],items[8]]
+	return result
+
+def parseLoad2(b): #funzione per l'estrazione delle informazioni dal body dei messaggi DELETE_LOAD
+
+	items = b.split(" ")
+	CID = items[1].split(":")
+	result = [CID[0][1:-1],CID[1][1:-1],CID[2][1:-1]]
+	return result
+
+
+'''
+class ProducerAgent(spade.Agent.Agent):
 
 	class ReceiveUP(spade.Behaviour.Behaviour):
 		#This behaviour will receive only UPDATE_PREDICTION messages
@@ -75,7 +66,8 @@ def getData2(b): #funzione per l'estrazione delle informazioni dal body dei mess
 
 		# Add the RECEIVE_UPDATE_PREDICTION behaviour
 		rup = self.ReceiveUP() 
-		self.addBehaviour(rup, mt)'''	
+		self.addBehaviour(rup, mt)
+'''
 
 
 class ReceiverAgent(spade.Agent.Agent):
@@ -94,7 +86,7 @@ class ReceiverAgent(spade.Agent.Agent):
 					print "I got a CREATE_PRODUCER message!"
 					body = msg.getBody()
 					print "Body is:",body
-					data = getData1(body)
+					data = parsePV(body)
 					pH=data[0]
 					pID=data[1]
 					print "Producer House:",pH+",","Producer ID:",pID
@@ -148,15 +140,9 @@ class ReceiverAgent(spade.Agent.Agent):
 				if (msg.getSubject() == "LOAD"):
 					print "I got a CREATE_LOAD message!"
 
-					# ACK
-					#ack = xmpp.Message()
-					#ack.setTo(msg.getFrom())
-					#ack.setSubject("ACK_CL")
-					#self.myAgent.send(ack)
-
 					body = msg.getBody()
 					print "Body is:",body
-					data = getData2(body)
+					data = parseLoad1(body)
 					lH=data[0]
 					lID=data[1]
 					lT=data[2]
@@ -201,7 +187,7 @@ class ReceiverAgent(spade.Agent.Agent):
 					print "I got a DELETE_LOAD message!"
 					body = msg.getBody()
 					print "Body is:",body
-					data = getData1(body)
+					data = parseLoad2(body)
 					lH=data[0]
 					lID=data[1]
 					lT=data[2]
@@ -242,21 +228,27 @@ class ReceiverAgent(spade.Agent.Agent):
 	def _setup(self):
 		print "Receiver starting . . ."
 
-		# XMPP message generic template
-		mt = spade.Behaviour.MessageTemplate(xmpp.Message()) 
-
+		m1 =xmpp.Message()
+		m1.setSubject("CREATE_PRODUCER")
+		mt1 = spade.Behaviour.MessageTemplate(m1)
 		# Add the RECEIVE_CREATE_PRODUCER behaviour
-		rcp = self.ReceiveCP() 
-		self.addBehaviour(rcp, mt)
+		rcp = self.ReceiveCP()
+		self.addBehaviour(rcp, mt1)
 
+		m2 = xmpp.Message()
+		m2.setSubject("LOAD")
+		mt2 = spade.Behaviour.MessageTemplate(m2)
 		# Add the RECEIVE_CREATE_LOAD behaviour
 		rcl = self.ReceiveCL() 
-		self.addBehaviour(rcl, mt)
+		self.addBehaviour(rcl, mt2)
 
+		m3 = xmpp.Message()
+		m3.setSubject("DELETE_LOAD")
+		mt3 = spade.Behaviour.MessageTemplate(m3)
 		# Add the RECEIVE_DELETE_LOAD behaviour
 		rdl = self.ReceiveDL() 
-		self.addBehaviour(rdl, mt)
-			
+		self.addBehaviour(rdl, mt3)
+
 
 if __name__ == "__main__":
 
@@ -287,12 +279,7 @@ while alive:
         time.sleep(1)
     except KeyboardInterrupt:
         alive=False
+
 r.stop()
-
-'''if (os.path.isfile(dirName+"/production/"+fileName+".constraints.csv")==True): 
-	os.remove(dirName+"/production/"+fileName+".constraints.csv")
-if (os.path.isfile(dirName+"/consumption/"+fileName+".constraints.csv")==True): 
-	os.remove(dirName+"/consumption/"+fileName+".constraints.csv")'''
-
 shutil.rmtree(dirName)
-sys.exit(0)
+sys.exit(1)

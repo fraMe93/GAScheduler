@@ -478,17 +478,20 @@ def main(dirname,constFile,dirResults):
     date=datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
     print result
 
-    if not os.path.exists(dirResults+"/"+date):
-    	os.makedirs(dirResults+"/"+date)
+    if not os.path.exists(dirResults+"/"+constFile):
+    	os.makedirs(dirResults+"/"+constFile)
 
-    with open(dirResults+'/'+date+'/results.csv', 'ab') as csvfile:
+    if not os.path.exists(dirResults+"/"+constFile+"/"+date):
+    	os.makedirs(dirResults+"/"+constFile+"/"+date)
+
+    with open(dirResults+'/'+constFile+'/'+date+'/results.csv', 'ab') as csvfile:
         b = best_ind
         best_ind[:] = [int(x) for x in best_ind]
         reswriter = csv.writer(csvfile, delimiter=',',quotechar='"', quoting=csv.QUOTE_MINIMAL)
         reswriter.writerow([result['pvtotal'], result['energy_out'], result['energy_in'], result['self_consumption'], result['max_consumption'], mean, qn, MIN, MAX, b, end-start])
   
-    shutil.copyfile(dirname+"/production/"+constFile+".constraints.csv",dirResults+"/"+date+"/"+constFile+"P.constraints.csv")
-    shutil.copyfile(dirname+"/consumption/"+constFile+".constraints.csv",dirResults+"/"+date+"/"+constFile+"C.constraints.csv")
+    shutil.copyfile(dirname+"/production/"+constFile+".constraints.csv",dirResults+"/"+constFile+"/"+date+"/"+constFile+"P.constraints.csv")
+    shutil.copyfile(dirname+"/consumption/"+constFile+".constraints.csv",dirResults+"/"+constFile+"/"+date+"/"+constFile+"C.constraints.csv")
 
     #myProblem.plotpower()
     #plt.show()

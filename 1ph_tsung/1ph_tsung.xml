@@ -1,0 +1,159 @@
+<?xml version="1.0"?>
+<!DOCTYPE tsung SYSTEM "/usr/share/tsung/tsung-1.0.dtd">
+
+<tsung loglevel="debug"  version="1.0">
+
+  <clients>
+    <client host="localhost" use_controller_vm="true"></client>
+  </clients>
+
+  <!-- Server side setup -->
+  <servers>
+   <server host="127.0.0.1" port="5222" type="tcp"></server>
+  </servers>
+
+  <load> 
+
+   <arrivalphase phase="1" duration="10" unit="second">
+     <users interarrival="2" unit="second" maxnumber="4" ></users>  <!-- max 13 -->
+     <session_setup name="producers" probability="100"/>
+     <session_setup name="consumers" probability="0"/>
+   </arrivalphase>
+
+   <arrivalphase phase="2" duration="1" unit="minute">
+     <users interarrival="5" unit="second" maxnumber="6" ></users>  <!-- max 44 -->
+     <session_setup name="producers" probability="0"/>
+     <session_setup name="consumers" probability="100"/>
+   </arrivalphase>
+
+  </load>
+
+  <!-- JABBER parameters -->
+  <!-- to synchronise users,  use a global acknowledgement -->
+ <options>
+  <option type="ts_jabber" name="global_number" value="0"></option>
+  <option type="ts_jabber" name="userid_max" value="1"></option>
+  <option type="ts_jabber" name="domain" value="ubuntu.local"></option>
+  <option type="ts_jabber" name="passwd" value="secret"></option>
+
+  <option name="file_server" id='pvdb' value="producers.csv"/>
+  <option name="file_server" id='loaddb' value="consumers.csv"/>
+ </options>
+
+ <sessions>
+
+  <!-- SESSION 1 -->
+  <session probability="100" name="producers" type="ts_jabber" bidi="true">
+
+  	<setdynvars sourcetype="file" fileid="pvdb" delimiter="," order="iter">
+   		<var name="pvusername" />
+   		<var name="pvpassword" />
+   		<var name="pvres" />
+   		<var name="pvhouse" />
+   		<var name="pvid" />
+  	</setdynvars>
+
+  	<request subst='true'>
+     		<jabber type="connect" ack="no_ack"   >
+        		<xmpp_authenticate username="%%_pvusername%%" passwd="%%_pvpassword%%" />
+     		</jabber>
+  	</request>	
+	
+  	  <thinktime value="2"></thinktime>
+
+  	<request> <jabber type="auth_sasl" ack="local"></jabber> </request>
+  	<request> <jabber type="connect" ack="local"></jabber> </request>
+  	<request subst='true'> <jabber type="auth_sasl_bind" ack="local"  resource="%%_pvres%%"></jabber></request>
+  	<request subst='true'> <jabber type="auth_sasl_session" ack="local"  resource="%%_pvres%%"></jabber></request>
+
+  	<request> <jabber type="presence:initial" ack="no_ack"/> </request>
+
+	  <thinktime value="2"></thinktime>
+
+        <!-- CREATE PRODUCER -->
+        <transaction name="CREATE_PRODUCER">
+                <request subst="true">
+                    <jabber type="raw" ack="global" data="&lt;message xmlns=&quot;jabber:client&quot; to=&quot;taskscheduler@ubuntu.local/actormanager&quot; type=&quot;chat&quot; id=&quot;7&quot; from=&quot;%%_pvusername%%@ubuntu.local/%%_pvres%%&quot;&gt;&lt;subject&gt;CREATE_PRODUCER&lt;/subject&gt;&lt;body&gt;CREATE_PRODUCER PV [%%_pvhouse%%]:[%%_pvid%%] 1.csv&lt;/body&gt;&lt;/message&gt;"></jabber>
+                </request>
+        </transaction>
+
+  	  <thinktime value="2"></thinktime>
+
+  	<request> <jabber type="close" ack="no_ack"></jabber> </request>
+
+  </session>
+
+  <!-- SESSION 2 -->
+  <session probability="100" name="consumers" type="ts_jabber" bidi="true">
+
+	<setdynvars sourcetype="file" fileid="loaddb" delimiter="," order="iter">
+   		<var name="lusername" />
+   		<var name="lpassword" />
+   		<var name="lres" />
+   		<var name="lhouse" />
+   		<var name="lid" />
+   		<var name="ltask" />
+   		<var name="est" />
+   		<var name="lst" />
+  	</setdynvars>
+
+	<request subst='true'>
+     		<jabber type="connect" ack="no_ack"   >
+        		<xmpp_authenticate username="%%_lusername%%" passwd="%%_lpassword%%" />
+     		</jabber>
+  	</request>	
+	
+  	  <thinktime value="2"></thinktime>
+
+  	<request> <jabber type="auth_sasl" ack="local"></jabber> </request>
+  	<request> <jabber type="connect" ack="local"></jabber> </request>
+  	<request subst='true'> <jabber type="auth_sasl_bind" ack="local"  resource="%%_lres%%"></jabber></request>
+  	<request subst='true'> <jabber type="auth_sasl_session" ack="local"  resource="%%_lres%%"></jabber></request>
+
+  	<request> <jabber type="presence:initial" ack="no_ack"/> </request>
+
+	  <thinktime value="2"></thinktime>
+
+	<!-- CREATE LOAD -->
+        <transaction name="CREATE_LOAD1">
+		<request subst="true">
+        		<match do="dump" when="match">&lt;body&gt;(.*?)[\n&lt;]</match>
+        		<dyn_variable name="body" re="&lt;body&gt;(.*?)[\n&lt;]" />    
+				<jabber type="raw" ack="parse" regexp="ASSIGNED_START_TIME (.*?)[\n&lt;]" data="&lt;message xmlns=&quot;jabber:client&quot; to=&quot;taskscheduler@ubuntu.local/actormanager&quot; type=&quot;chat&quot; id=&quot;7&quot; from=&quot;%%_lusername%%@ubuntu.local/%%_lres%%&quot;&gt;&lt;subject&gt;LOAD&lt;/subject&gt;&lt;body&gt;LOAD ID [%%_lhouse%%]:[%%_lid%%]:[%%_ltask%%] SEQUENCE 1 EST %%_est%% LST %%_lst%% PROFILE 1.csv&lt;/body&gt;&lt;/message&gt;"></jabber>
+		</request>
+        	<request subst="true">
+			<jabber type="chat" ack="no_ack" data="%%ts_cossmic:getAST%%" destination="random"></jabber>
+		</request>  
+        </transaction>
+
+	  <thinktime value="2"></thinktime>
+
+        <!-- UPDATE_PREDICTION
+        <transaction name="UPDATE_PREDICTION">
+        	<request subst="true">
+        		<match do="dump" when="match">&lt;message(.*)&gt;</match>
+        		<jabber type="raw" ack="no_ack" data="&lt;message xmlns=&quot;jabber:client&quot; to=&quot;taskscheduler@ubuntu.local/pv_producer[%%_house%%]:[1]&quot; type=&quot;chat&quot; id=&quot;7&quot; from=&quot;%%_username%%@ubuntu.local/%%_res%%&quot;&gt;&lt;subject&gt;PREDICTION_UPDATE&lt;/subject&gt;&lt;body&gt;PREDICTION_UPDATE  1.1.csv&lt;/body&gt;&lt;/message&gt;"></jabber>
+        	</request>
+        </transaction>
+
+  	  <thinktime min="2" max="5" random="true"></thinktime>
+	  <thinktime value="2"></thinktime> -->
+
+	<!-- DELETE LOAD-->
+	<setdynvars sourcetype="erlang" callback="ts_cossmic:getASTProducer">
+   		<var name="vendor"/>
+	</setdynvars>
+
+        <request subst="true">
+        	<jabber type="raw" ack="no_ack" data="&lt;message xmlns=&quot;jabber:client&quot; to=&quot;taskscheduler@ubuntu.local/actormanager&quot; type=&quot;chat&quot; id=&quot;7&quot; from=&quot;%%_lusername%%@ubuntu.local/%%_lres%%&quot;&gt;&lt;subject&gt;DELETE_LOAD &lt;/subject&gt;&lt;body&gt;DELETE_LOAD [%%_lhouse%%]:[%%_lid%%]:[%%_ltask%%] 0.1 %%_vendor%%&lt;/body&gt;&lt;/message&gt;"></jabber>
+        </request>
+
+	  <thinktime value="2"></thinktime>
+
+  	<request> <jabber type="close" ack="no_ack"></jabber> </request>
+
+  </session>
+
+ </sessions>
+
+</tsung>
